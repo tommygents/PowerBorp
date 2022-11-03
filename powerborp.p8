@@ -52,6 +52,9 @@ powerup_active=false
 powerup_have=true
 rightpressed=false
 jetspr=46
+powerup_timermax=78
+powerup_spr=44
+powerup_meter=5
 
 --main menu title vars
 title_y=27
@@ -124,7 +127,9 @@ function reset_game() -- all the variables getting back to their start positions
 	if(score>best) best=score
 
 	score=0
-	
+	powerup_active=false
+	powerup_have=true
+	powerup_meter=0
 	bird_x=10
 	bird_y=10
 	bird_v=0
@@ -206,6 +211,10 @@ function draw_tube(_t) -- -t is the tube "object" that we're operating with
 
 end
 
+function draw_powerup()
+spr(44,2,3,2,2)
+end
+
 --check col b/t bird and tube --!!!
 function overlap(_t)
 	if(bird_x+8>=_t.x and
@@ -248,6 +257,11 @@ function game_update() --update during the game
 		if(bird_x==t.x)then --if the bird is the same as x position of the current tube add to the score
 			sfx(3)
 			score+=1
+			powerup_meter+=1
+			if(powerup_meter==5)then
+				powerup_have=true
+				sfx(3)
+			end
 		end
 	
 	end
@@ -293,9 +307,11 @@ function game_update() --update during the game
 		end
 	
 	end
-
+	if(powerup_active)then
+	jet_move()
+	else
 	bird_move() --initializing movement
-
+	end
 	
 end
 --
@@ -320,28 +336,35 @@ function game_draw()
 	end
 	-- draws a bird
 	spr(bird_spr,bird_x,bird_y,2,2)
+	if(powerup_active)then
+	spr(jetspr,bird_x-3,bird_y)
+	end
 	rectfill(64,10,66,14,7) --score square at the top of the screen
 	print(score,64,10,0) --prints the score 
-
+	if(powerup_have)then
+	draw_powerup()
+	end
 end
 
 function bird_move() 
 	
-	if (not powerup_active)do
-		if(btn(1,0) and not rightpressed and powerup_have)then
+	if (not powerup_active)then
+		if(btn(1,0) and powerup_have)then
 			powerup_active=true
-			powerup_timer=50
+			powerup_timer=powerup_timermax
+			powerup_have=false
+			rightpressed=true
+			powerup_meter=0
 		end
 		if(not btn(1,0))then
 		rightpressed=false
 		end
-		if (powerup_active)then
-				jet_move()
-		else
+		if (not powerup_active)then
+		
 			bird_v+=gravity --adding gravity to the bird's velocity
 			bird_y+=bird_v --bird's y position is getting updated by velocity
-			if (bird_y>=0 and bird_y<=128)do
-				if(btn(4,0) and not zpressed)do --btn is input checker that expects "z" input, as 4 is preset to "z" key and 0 means 1 player
+			if (bird_y>=0 and bird_y<=128)then
+				if(btn(4,0) and not zpressed)then --btn is input checker that expects "z" input, as 4 is preset to "z" key and 0 means 1 player
 					sfx(0)
 					bird_v-=jump_force --add jump_force to bird's velocity
 					bird_spr=14 --changing the sprite
@@ -360,18 +383,15 @@ end
 
 
 function jet_move()
-	powerup_timer--
-	if (powerup_timer%2=1)then
+	powerup_timer=(powerup_timer - 1)
+	if (powerup_timer%10<5)then
 		jetspr=46
 	else
 		jetspr=47
 	end
-	if(powerup_timer=0)do
+	if(powerup_timer<=0)do
 		powerup_active=false
 	end
-
-
-
 end
 
 
@@ -443,6 +463,7 @@ function menu_draw()
 	
 	print("press x to start",32,50,7)
 	print("z to flap",47,60,0)
+	print("right arrow to use powerup",12,70,0)
 
 end
 
@@ -547,22 +568,22 @@ __gfx__
 11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff11118888888811110011888888881111
 11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00001111111100000000111111110000
 11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00001111111100000000111111110000
-11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00000000000000000000cc0000000c00
-11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff000000000000000000ccc9c0000cc9c0
-11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff000000cccc7000000cc9999600cc9996
-11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff000000cccc700000cc9988860cc99886
-11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff0000cccccccc70000cc9999600cc9996
-11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff0000cccccccc700000ccc9c0000cc9c0
-11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00cccc000007cc700000cc0000000c00
-111111111111111111111111111111110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00cccc000007cc700000000000000000
-111111111111111111111111111111110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff0ccccc00c007ccc70000000000000000
-000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff0ccccc000007ccc70000000000000000
-000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00cccc000007cc700000000000000000
-000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00cccc007ccccc700000000000000000
-000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff0000cc007ccc70000000000000000000
-000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff0000cc007ccc70000000000000000000
-000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff000000cccc7000000000000000000000
-000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff000000cccc7000000000000000000000
+11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00000000000000000000aa0000000a00
+11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff000000000000000000aaa9a0000aa9a0
+11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00000088887000000aa9999600aa9996
+11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff0000008888700000aa9988860aa99886
+11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00008888888870000aa9999600aa9996
+11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff000088888888700000aaa9a0000aa9a0
+11bbb77b7bbbbbbbbbbbbbbb3b3333110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00888811111788700000aa0000000a00
+111111111111111111111111111111110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00888811111788700000000000000000
+111111111111111111111111111111110011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff08888811811788870000000000000000
+000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff08888811111788870000000000000000
+000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00888811111788700000000000000000
+000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00888811788888700000000000000000
+000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00008811788870000000000000000000
+000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00008811788870000000000000000000
+000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00000088887000000000000000000000
+000000000000000000000000000000000011bbbbb77b7ebbbbbbbb3b33331100ffffffffffffffffffffffffffffffff00000088887000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000777777777000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000077777777777770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
