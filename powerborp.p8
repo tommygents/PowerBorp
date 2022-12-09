@@ -11,7 +11,7 @@ tubes_y=-100
 tubes_x=200
 offset=96
 gap=50
-tube_v=1 -- velocity, giving the parallax effect to it
+tube_v=1 -- velocity, giving the parallax effect this element type. The higher the number, the faster it will move relative to everything else
 
 --ground vars
 ground={}
@@ -55,6 +55,7 @@ jetspr=46
 powerup_timermax=78
 powerup_spr=44
 powerup_meter=5
+powerup_v=1
 
 --main menu title vars
 title_y=27
@@ -145,7 +146,7 @@ function reset_game() -- all the variables getting back to their start positions
 	 --adds new tubes to table/spawns them.   
     for i=0,tube_num do
         add_tube(tubes_x+i*offset)
-        --adds 3 at x position plus offset times number of tubes.
+        --adds tube_num(3) tubes at x position plus offset times number of tubes.
     end
 	state="game"
 	
@@ -177,6 +178,7 @@ function add_hill(_x)
 end
 
 --make tube obj
+--uses tubes_y as the basis to set a random height for the tubes, within the possible range 
 function add_tube(_x)
 	add(tubes,{
 		x=_x,
@@ -187,6 +189,7 @@ function add_tube(_x)
 end
 
 --make powerup obj
+--I'll want to change _y if I want to be able to set a random height to the powerup object
 function add_powerup(_x,_y)
 add(powerups, {
 x=_x,
@@ -200,19 +203,19 @@ function draw_tube(_t) -- -t is the tube "object" that we're operating with
 		spr(4,_t.x,_t.y+(i*32),4,4)
 		_last_y=_t.y+(i*32)
 	end
--- 164~172 makes sure that there are gaps between the tubes
+--the endcap on the tube
  spr(0,_t.x,_last_y+24,4,4)
- 	
+--the bottom half of the tube 	
  for i=0,2 do
  	spr(4,_t.x,_last_y+gap+32+(i*32),4,4)
  end
- 
+ --the endcap on the bottom half of the tube
  spr(0,_t.x,_last_y+24+gap,4,4)
 
 end
 
-function draw_powerup()
-spr(44,2,3,2,2)
+function draw_powerup(_p)
+spr(44,_p.x,p.y,2,2)
 end
 
 --check col b/t bird and tube --!!!
@@ -248,7 +251,9 @@ function game_update() --update during the game
 		t.x-=tube_v --it's updating the x position based on the velocity and immitates parrallax this way
 		
 		if(t.x<-32)then --adding new tubes and deleting old ones
+			--referencing any member of table creates a pointer, not a copy
 			temp=t
+			--tube_num+1 is the last tube in tubes, because for-loops start at 0 and tables start at 1
 			t.x=tubes[tube_num+1].x+offset
 			del(tubes,t)
 			add(tubes,temp)
@@ -264,6 +269,17 @@ function game_update() --update during the game
 			end
 		end
 	
+	end
+
+	for p in all(powerups) do
+		p.x-=powerup_v
+		if(p.x<-16)then
+			pemp=p
+			p.x=powerups[powerup_num+1].x+480
+			del(powerups,p)
+			add(powerups,pemp)
+		end	
+
 	end
 	
 	for g in all(ground) do --adding new ground and deleting old one
