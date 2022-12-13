@@ -41,21 +41,19 @@ xpressed=false
 --powerup vars
 powerups={}
 powerup_x=-10
-powerup_y=-10
+powerup_y=20
 powerup_num=3
 powerup_ind=1
 powerup_vis=false
---powerup spawn distances
-powerup_min=480
-powerup_max=960
 powerup_active=false
-powerup_have=true
+powerup_have=false
 rightpressed=false
 jetspr=46
 powerup_timermax=78
 powerup_spr=44
-powerup_meter=5
+powerup_offset=96
 powerup_v=1
+last_x=150
 
 --main menu title vars
 title_y=27
@@ -90,7 +88,8 @@ function _init() --basically start in unity
 		add_hill(i*128)
 	end
 	for i=0,powerup_num do
-		add_powerup(powerup_x,powerup_y)
+		add_powerup(last_x,powerup_y)
+		last_x+=powerup_offset*flr(rnd(6)+1)
 		end
 end
 
@@ -129,8 +128,7 @@ function reset_game() -- all the variables getting back to their start positions
 
 	score=0
 	powerup_active=false
-	powerup_have=true
-	powerup_meter=0
+	powerup_have=false
 	bird_x=10
 	bird_y=10
 	bird_v=0
@@ -148,6 +146,13 @@ function reset_game() -- all the variables getting back to their start positions
         add_tube(tubes_x+i*offset)
         --adds tube_num(3) tubes at x position plus offset times number of tubes.
     end
+
+	powerups = {}
+	last_x=150
+	for i=0,powerup_num do
+		add_powerup(last_x,powerup_y)
+		last_x+=powerup_offset*flr(rnd(6)+1)
+		end
 	state="game"
 	
 end
@@ -193,7 +198,7 @@ end
 function add_powerup(_x,_y)
 add(powerups, {
 x=_x,
-y=_y,
+y=_y+rnd(80),
 hit_w=16,
 hit_h=16})
 end
@@ -215,7 +220,11 @@ function draw_tube(_t) -- -t is the tube "object" that we're operating with
 end
 
 function draw_powerup(_p)
-spr(44,_p.x,p.y,2,2)
+spr(44,_p.x,_p.y,2,2)
+end
+
+function draw_powerup_indicator()
+	sspr(97,17,15,15, 54,8,8,8)
 end
 
 --check col b/t bird and tube --!!!
@@ -230,6 +239,15 @@ function overlap(_t)
         bird_x<=_t.x+_t.hit_w and
         bird_y+8>=_t.y+(3*_t.hit_h)+gap)then
 		return true  --bugfix: made it so that the bird hits tubes up high
+	end
+end
+
+function overlap_p(_p)
+	if(bird_x+8>=_p.x and
+		bird_x<=_p.x+_p.hit_w and
+		bird_y+8>=_p.y and
+		bird_y<=_p.y+_p.hit_h)then
+		return true
 	end
 end
 
@@ -262,25 +280,34 @@ function game_update() --update during the game
 		if(bird_x==t.x)then --if the bird is the same as x position of the current tube add to the score
 			sfx(3)
 			score+=1
-			powerup_meter+=1
-			if(powerup_meter==5)then
-				powerup_have=true
-				sfx(3)
 			end
-		end
 	
 	end
 
 	for p in all(powerups) do
-		p.x-=powerup_v
+		if(overlap_p(p))then
+			sfx(3)
+			powerup_have=true
+			p.x+=last_x+(powerup_offset*flr(rnd(6)+1))
+			p.y=powerup_y+rnd(80)
+			last_x=p.x
+
+		end
+
+
+		
 		if(p.x<-16)then
 			pemp=p
-			p.x=powerups[powerup_num+1].x+480
-			del(powerups,p)
-			add(powerups,pemp)
+			p.x+=last_x+(powerup_offset*flr(rnd(6)+1))
+			p.y=powerup_y+rnd(80)
+			last_x=p.x
+			--del(powerups,p)
+			--add(powerups,pemp)
 		end	
-
+		p.x-=powerup_v
 	end
+	
+	last_x-=powerup_v
 	
 	for g in all(ground) do --adding new ground and deleting old one
 		
@@ -352,13 +379,19 @@ function game_draw()
 	end
 	-- draws a bird
 	spr(bird_spr,bird_x,bird_y,2,2)
+	--adds jet
 	if(powerup_active)then
-	spr(jetspr,bird_x-3,bird_y)
+		spr(jetspr,bird_x-3,bird_y)
 	end
 	rectfill(64,10,66,14,7) --score square at the top of the screen
 	print(score,64,10,0) --prints the score 
-	if(powerup_have)then
-	draw_powerup()
+	
+	for p in all(powerups) do
+		draw_powerup(p)
+	end
+
+	if(powerup_have)do
+		draw_powerup_indicator()
 	end
 end
 
@@ -370,8 +403,7 @@ function bird_move()
 			powerup_timer=powerup_timermax
 			powerup_have=false
 			rightpressed=true
-			powerup_meter=0
-		end
+			end
 		if(not btn(1,0))then
 		rightpressed=false
 		end
