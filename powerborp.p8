@@ -42,7 +42,7 @@ xpressed=false
 powerups={}
 powerup_x=-10
 powerup_y=20
-powerup_num=3
+powerup_num=0
 powerup_ind=1
 powerup_vis=false
 powerup_active=false
@@ -391,8 +391,7 @@ function game_draw()
 	end
 	rectfill(64,10,66,14,7) --score square at the top of the screen
 	print(score,64,10,0)--prints the score 
-	print(next_x,5,20,0)--debugging message 
-	print(next_x_debug,5,40,0)--debugging message 
+
 	for p in all(powerups) do
 		draw_powerup(p)
 	end
