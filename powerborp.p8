@@ -53,7 +53,9 @@ powerup_timermax=78
 powerup_spr=44
 powerup_offset=96
 powerup_v=1
-last_x=150
+next_x=150
+next_x_debug=150
+
 
 --main menu title vars
 title_y=27
@@ -88,8 +90,9 @@ function _init() --basically start in unity
 		add_hill(i*128)
 	end
 	for i=0,powerup_num do
-		add_powerup(last_x,powerup_y)
-		last_x+=powerup_offset*flr(rnd(6)+1)
+		add_powerup(next_x,powerup_y)
+		next_x+=powerup_offset*flr(rnd(6)+1)
+		next_x_debug = next_x
 		end
 end
 
@@ -148,10 +151,11 @@ function reset_game() -- all the variables getting back to their start positions
     end
 
 	powerups = {}
-	last_x=150
+	next_x=150
 	for i=0,powerup_num do
-		add_powerup(last_x,powerup_y)
-		last_x+=powerup_offset*flr(rnd(6)+1)
+		add_powerup(next_x,powerup_y)
+		next_x+=powerup_offset*flr(rnd(6)+1)
+		next_x_debug = next_x
 		end
 	state="game"
 	
@@ -288,9 +292,10 @@ function game_update() --update during the game
 		if(overlap_p(p))then
 			sfx(3)
 			powerup_have=true
-			p.x+=last_x+(powerup_offset*flr(rnd(6)+1))
+			p.x+=next_x
 			p.y=powerup_y+rnd(80)
-			last_x=p.x
+			next_x=p.x+(powerup_offset*flr(rnd(6)+1))
+			next_x_debug = next_x
 
 		end
 
@@ -298,16 +303,17 @@ function game_update() --update during the game
 		
 		if(p.x<-16)then
 			pemp=p
-			p.x+=last_x+(powerup_offset*flr(rnd(6)+1))
+			p.x+=next_x
 			p.y=powerup_y+rnd(80)
-			last_x=p.x
+			next_x=p.x+(powerup_offset*flr(rnd(6)+1))
+			next_x_debug = next_x
 			--del(powerups,p)
 			--add(powerups,pemp)
 		end	
 		p.x-=powerup_v
 	end
 	
-	last_x-=powerup_v
+	next_x-=powerup_v
 	
 	for g in all(ground) do --adding new ground and deleting old one
 		
@@ -384,8 +390,9 @@ function game_draw()
 		spr(jetspr,bird_x-3,bird_y)
 	end
 	rectfill(64,10,66,14,7) --score square at the top of the screen
-	print(score,64,10,0) --prints the score 
-	
+	print(score,64,10,0)--prints the score 
+	print(next_x,5,20,0)--debugging message 
+	print(next_x_debug,5,40,0)--debugging message 
 	for p in all(powerups) do
 		draw_powerup(p)
 	end
